@@ -162,13 +162,27 @@ export function useProductValidation(existingProducts = [], editingProduct = nul
     
     if (allowDecimals) {
       // Permitir números decimales
-      const regex = /^\d*\.?\d*$/;
-      return regex.test(value) ? value : value.slice(0, -1);
+      // Remover cualquier carácter que no sea dígito o punto decimal
+      let filtered = value.replace(/[^0-9.]/g, '');
+      
+      // Asegurar que solo haya un punto decimal
+      const parts = filtered.split('.');
+      if (parts.length > 2) {
+        filtered = parts[0] + '.' + parts.slice(1).join('');
+      }
+      
+      // Limitar a 2 decimales máximo
+      if (parts.length === 2 && parts[1].length > 2) {
+        filtered = parts[0] + '.' + parts[1].substring(0, 2);
+      }
+      
+      return filtered;
     } else {
       // Solo enteros
       return value.replace(/[^0-9]/g, '');
     }
   };
+
 
   // Función para formatear código de producto
   const formatProductCode = (value) => {

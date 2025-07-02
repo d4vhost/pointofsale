@@ -678,27 +678,43 @@ export default {
     },
 
     handlePurchasePriceInput(event) {
-      const filteredPrice = this.validator.filterNumericOnly(event.target.value, true);
-      const numValue = Math.min(parseFloat(filteredPrice) || 0, 999000);
-      this.productForm.purchasePrice = numValue.toString();
-      this.validator.validateField('purchasePrice', this.productForm.purchasePrice);
-      
-      // Re-validar precio de venta si existe
-      if (this.productForm.sellingPrice) {
-        this.validator.validateField('sellingPrice', this.productForm.sellingPrice, {
-          purchasePrice: parseFloat(this.productForm.purchasePrice) || 0
-        });
-      }
-    },
-
-    handleSellingPriceInput(event) {
-      const filteredPrice = this.validator.filterNumericOnly(event.target.value, true);
-      const numValue = Math.min(parseFloat(filteredPrice) || 0, 999000);
-      this.productForm.sellingPrice = numValue.toString();
+    const filteredPrice = this.validator.filterNumericOnly(event.target.value, true);
+    
+    // Convertir a número y limitar el máximo
+    let numValue = parseFloat(filteredPrice) || 0;
+    if (numValue > 999000) {
+      numValue = 999000;
+    }
+    
+    // Mantener el formato con decimales si los tiene
+    this.productForm.purchasePrice = filteredPrice;
+    
+    this.validator.validateField('purchasePrice', this.productForm.purchasePrice);
+    
+    // Re-validar precio de venta si existe
+    if (this.productForm.sellingPrice) {
       this.validator.validateField('sellingPrice', this.productForm.sellingPrice, {
         purchasePrice: parseFloat(this.productForm.purchasePrice) || 0
       });
-    },
+    }
+  },
+
+  handleSellingPriceInput(event) {
+    const filteredPrice = this.validator.filterNumericOnly(event.target.value, true);
+    
+    // Convertir a número y limitar el máximo
+    let numValue = parseFloat(filteredPrice) || 0;
+    if (numValue > 999000) {
+      numValue = 999000;
+    }
+    
+    // Mantener el formato con decimales si los tiene
+    this.productForm.sellingPrice = filteredPrice;
+    
+    this.validator.validateField('sellingPrice', this.productForm.sellingPrice, {
+      purchasePrice: parseFloat(this.productForm.purchasePrice) || 0
+    });
+  },
 
     handleMinimumStockInput(event) {
       const filteredStock = this.validator.filterNumericOnly(event.target.value, false);
