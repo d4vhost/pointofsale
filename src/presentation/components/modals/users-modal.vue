@@ -8,7 +8,7 @@
         <button @click="closeModal" class="close-button">×</button>
       </div>
 
-      <!-- Body del Modal (reemplaza modal-content) -->
+      <!-- Body del Modal -->
       <div class="modal-body">
         
         <!-- Mensaje de Error Global -->
@@ -67,7 +67,7 @@
                   v-model="userForm.identificationNumber" 
                   type="text" 
                   required 
-                  placeholder="123456789"
+                  placeholder="1234567890"
                   maxlength="10"
                   @input="validateField('identificationNumber')"
                   @keypress="onlyNumbers"
@@ -123,7 +123,7 @@
                   type="text" 
                   required 
                   placeholder="Calle, Ciudad"
-                  maxlength="25"
+                  maxlength="100"
                   @input="validateField('address')"
                   :class="{ 'error': fieldErrors.address }"
                 >
@@ -131,15 +131,28 @@
               </div>
               <div class="form-group">
                 <label>Contraseña:</label>
-                <input 
-                  v-model="userForm.password" 
-                  type="password" 
-                  required 
-                  placeholder="Contraseña segura"
-                  maxlength="25"
-                  @input="validateField('password')"
-                  :class="{ 'error': fieldErrors.password }"
-                >
+                <div class="password-container">
+                  <input 
+                    v-model="userForm.password" 
+                    type="password" 
+                    required 
+                    placeholder="Contraseña segura (6-15 caracteres)"
+                    maxlength="15"
+                    @input="validateField('password')"
+                    :class="{ 'error': fieldErrors.password }"
+                  >
+                  <button 
+                    type="button" 
+                    @click="generatePassword" 
+                    class="btn-generate-password"
+                    title="Generar contraseña segura"
+                  >
+                    🔐
+                  </button>
+                </div>
+                <div v-if="passwordStrength.strength" class="password-strength" :style="{ color: passwordStrength.color }">
+                  Seguridad: {{ passwordStrength.strength }}
+                </div>
                 <span v-if="fieldErrors.password" class="field-error">{{ fieldErrors.password }}</span>
               </div>
             </div>
@@ -183,7 +196,6 @@
             <table class="users-table">
               <thead>
                 <tr>
-                  <th>ID</th>
                   <th>Nombre</th>
                   <th>Email</th>
                   <th>Teléfono</th>
@@ -193,8 +205,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="user in filteredUsers" :key="user.userId">
-                  <td>{{ user.userId }}</td>
+                <tr v-for="user in paginatedUsers" :key="user.userId">
                   <td>{{ user.firstName }} {{ user.lastName }}</td>
                   <td>{{ user.email }}</td>
                   <td>{{ user.phone }}</td>
@@ -219,6 +230,41 @@
                 </tr>
               </tbody>
             </table>
+
+            <!-- Paginación -->
+            <div class="pagination" v-if="totalPages > 1">
+              <button 
+                @click="goToPage(1)" 
+                :disabled="currentPage === 1"
+                class="pagination-btn"
+              >
+                &#8249;&#8249;
+              </button>
+              <button 
+                @click="goToPage(currentPage - 1)" 
+                :disabled="currentPage === 1"
+                class="pagination-btn"
+              >
+                &#8249;
+              </button>
+              <span class="pagination-info">
+                Página {{ currentPage }} de {{ totalPages }} ({{ filteredUsers.length }} usuarios)
+              </span>
+              <button 
+                @click="goToPage(currentPage + 1)" 
+                :disabled="currentPage === totalPages"
+                class="pagination-btn"
+              >
+                &#8250;
+              </button>
+              <button 
+                @click="goToPage(totalPages)" 
+                :disabled="currentPage === totalPages"
+                class="pagination-btn"
+              >
+                &#8250;&#8250;
+              </button>
+            </div>
           </div>
 
           <!-- Mensaje si no hay usuarios -->
@@ -239,13 +285,13 @@ import { createUser } from '../../../data/api/post/postUsers.js';
 import { updateUser, toggleUserStatus } from '../../../data/api/put/putUsers.js';
 import { deleteUser } from '../../../data/api/delete/deleteUsers.js';
 
-// Importar validadores
-import { isValidName } from '../../../core/validators/nameValidator.js';
-import { isValidIdentification } from '../../../core/validators/identificationValidator.js';
+// Importar validadores actualizados
+import { isValidName, isUniqueNameCombination } from '../../../core/validators/nameValidator.js';
+import { isValidIdentification, isUniqueIdentification } from '../../../core/validators/identificationValidator.js';
 import { isValidPhone } from '../../../core/validators/phoneValidator.js';
-import { isValidEmail } from '../../../core/validators/emailValidator.js';
+import { isValidEmail, isUniqueEmail } from '../../../core/validators/emailValidator.js';
 import { isValidAddress } from '../../../core/validators/addressValidator.js';
-import { isValidPassword } from '../../../core/validators/passwordValidator.js';
+import { isValidPassword, generateSecurePassword, getPasswordStrength } from '../../../core/validators/passwordValidator.js';
 
 export default {
   name: 'UsersModal',
@@ -266,6 +312,9 @@ export default {
       roleFilter: '',
       roles: [],
       users: [],
+      // Paginación - Cambiado a 2 usuarios por página
+      currentPage: 1,
+      itemsPerPage: 2,
       userForm: {
         firstName: '',
         lastName: '',
@@ -284,7 +333,8 @@ export default {
         phone: '',
         address: '',
         password: ''
-      }
+      },
+      passwordStrength: { strength: '', score: 0, color: '' }
     }
   },
   computed: {
@@ -307,6 +357,18 @@ export default {
 
       return filtered;
     },
+
+    // Paginación
+    totalPages() {
+      return Math.ceil(this.filteredUsers.length / this.itemsPerPage);
+    },
+
+    paginatedUsers() {
+      const start = (this.currentPage - 1) * this.itemsPerPage;
+      const end = start + this.itemsPerPage;
+      return this.filteredUsers.slice(start, end);
+    },
+
     isFormValid() {
       // Verificar que no hay errores en los campos
       const hasErrors = Object.values(this.fieldErrors).some(error => error !== '');
@@ -318,19 +380,37 @@ export default {
       return !hasErrors && allFieldsFilled;
     }
   },
-  async mounted() {
-    if (this.isVisible) {
-      await this.loadInitialData();
-    }
-  },
+
   watch: {
     isVisible(newVal) {
       if (newVal) {
         this.loadInitialData();
       }
+    },
+
+    searchQuery() {
+      this.currentPage = 1; // Resetear a la primera página cuando se busca
+    },
+
+    roleFilter() {
+      this.currentPage = 1; // Resetear a la primera página cuando se filtra
     }
   },
+
+  async mounted() {
+    if (this.isVisible) {
+      await this.loadInitialData();
+    }
+  },
+
   methods: {
+    // Paginación
+    goToPage(page) {
+      if (page >= 1 && page <= this.totalPages) {
+        this.currentPage = page;
+      }
+    },
+
     // Validaciones de entrada
     onlyLetters(event) {
       const char = String.fromCharCode(event.which);
@@ -345,31 +425,85 @@ export default {
         event.preventDefault();
       }
     },
+
+    // Generar contraseña segura
+    generatePassword() {
+      const newPassword = generateSecurePassword(12);
+      this.userForm.password = newPassword;
+      this.validateField('password');
+      
+      // Mostrar la contraseña generada
+      alert(`Contraseña generada: ${newPassword}\n\n¡Asegúrate de guardarla en un lugar seguro!`);
+    },
     
-    // Validar campos individuales
-    validateField(fieldName) {
+    // Validar campos individuales con validaciones mejoradas
+    async validateField(fieldName) {
       let validation;
       
       switch (fieldName) {
         case 'firstName':
         case 'lastName':
           validation = isValidName(this.userForm[fieldName]);
+          
+          // Si es válido el formato, verificar unicidad
+          if (validation.isValid && this.userForm.firstName && this.userForm.lastName) {
+            const uniqueCheck = await isUniqueNameCombination(
+              this.userForm.firstName, 
+              this.userForm.lastName, 
+              this.users,
+              this.editingUser?.userId
+            );
+            if (!uniqueCheck.isValid) {
+              validation = uniqueCheck;
+            }
+          }
           break;
+
         case 'identificationNumber':
           validation = isValidIdentification(this.userForm[fieldName]);
+          
+          // Si es válido el formato, verificar unicidad
+          if (validation.isValid) {
+            const uniqueCheck = await isUniqueIdentification(
+              this.userForm[fieldName], 
+              this.users,
+              this.editingUser?.userId
+            );
+            if (!uniqueCheck.isValid) {
+              validation = uniqueCheck;
+            }
+          }
           break;
+
         case 'phone':
           validation = isValidPhone(this.userForm[fieldName]);
           break;
+
         case 'email':
           validation = isValidEmail(this.userForm[fieldName]);
+          
+          // Si es válido el formato, verificar unicidad
+          if (validation.isValid) {
+            const uniqueCheck = await isUniqueEmail(
+              this.userForm[fieldName], 
+              this.users,
+              this.editingUser?.userId
+            );
+            if (!uniqueCheck.isValid) {
+              validation = uniqueCheck;
+            }
+          }
           break;
+
         case 'address':
           validation = isValidAddress(this.userForm[fieldName]);
           break;
+
         case 'password':
           validation = isValidPassword(this.userForm[fieldName]);
+          this.passwordStrength = getPasswordStrength(this.userForm[fieldName]);
           break;
+
         default:
           validation = { isValid: true, message: '' };
       }
@@ -378,9 +512,13 @@ export default {
     },
     
     // Validar todo el formulario
-    validateForm() {
+    async validateForm() {
       const fields = ['firstName', 'lastName', 'identificationNumber', 'phone', 'email', 'address', 'password'];
-      fields.forEach(field => this.validateField(field));
+      
+      // Validar todos los campos de forma secuencial
+      for (const field of fields) {
+        await this.validateField(field);
+      }
       
       return this.isFormValid;
     },
@@ -418,6 +556,7 @@ export default {
       this.resetErrors();
       this.errorMessage = '';
       this.showForm = false;
+      this.currentPage = 1;
     },
     
     showCreateForm() {
@@ -443,6 +582,7 @@ export default {
         password: user.password || '',
         roleId: user.roleId
       };
+      this.passwordStrength = getPasswordStrength(this.userForm.password);
     },
     
     backToList() {
@@ -464,6 +604,7 @@ export default {
         password: '',
         roleId: ''
       };
+      this.passwordStrength = { strength: '', score: 0, color: '' };
     },
     
     resetErrors() {
@@ -484,7 +625,8 @@ export default {
 
       try {
         // Validar formulario completo antes de enviar
-        if (!this.validateForm()) {
+        const isValid = await this.validateForm();
+        if (!isValid) {
           throw new Error('Por favor corrige los errores en el formulario');
         }
         
@@ -531,106 +673,64 @@ export default {
       }
     },
     
-// Método actualizado para el deleteUser en users-modal.vue
-async deleteUser(user) {
-  // Confirmar con información más detallada
-  const confirmMessage = `¿Está seguro de eliminar PERMANENTEMENTE al usuario ${user.firstName} ${user.lastName}?\n\n` +
-    `⚠️ ADVERTENCIA: Esta acción:\n` +
-    `• Eliminará el usuario de forma permanente\n` +
-    `• Eliminará todas las facturas donde este usuario sea el cliente\n` +
-    `• Eliminará todos los detalles de esas facturas\n` +
-    `• Esta acción NO se puede deshacer\n\n` +
-    `¿Desea continuar?`;
-  
-  if (confirm(confirmMessage)) {
-    try {
-      this.errorMessage = '';
+    // Método actualizado para el deleteUser
+    async deleteUser(user) {
+      // Confirmar con información más detallada
+      const confirmMessage = `¿Está seguro de eliminar PERMANENTEMENTE al usuario ${user.firstName} ${user.lastName}?\n\n` +
+        `⚠️ ADVERTENCIA: Esta acción:\n` +
+        `• Eliminará el usuario de forma permanente\n` +
+        `• Eliminará todas las facturas donde este usuario sea el cliente\n` +
+        `• Eliminará todos los detalles de esas facturas\n` +
+        `• Esta acción NO se puede deshacer\n\n` +
+        `¿Desea continuar?`;
       
-      // Mostrar indicador de carga
-      const loadingMessage = 'Eliminando usuario y datos relacionados...';
-      console.log(loadingMessage);
-      
-      const result = await deleteUser(user.userId);
-      
-      // Mostrar información detallada del resultado
-      let successMessage = `Usuario "${user.firstName} ${user.lastName}" eliminado correctamente.`;
-      
-      if (result.customerInvoicesDeleted > 0) {
-        successMessage += `\n• Facturas eliminadas: ${result.customerInvoicesDeleted}`;
+      if (confirm(confirmMessage)) {
+        try {
+          this.errorMessage = '';
+          
+          // Mostrar indicador de carga
+          const loadingMessage = 'Eliminando usuario y datos relacionados...';
+          console.log(loadingMessage);
+          
+          const result = await deleteUser(user.userId);
+          
+          // Mostrar información detallada del resultado
+          let successMessage = `Usuario "${user.firstName} ${user.lastName}" eliminado correctamente.`;
+          
+          if (result.customerInvoicesDeleted > 0) {
+            successMessage += `\n• Facturas eliminadas: ${result.customerInvoicesDeleted}`;
+          }
+          
+          if (result.createdInvoicesUpdated > 0) {
+            successMessage += `\n• Facturas actualizadas (creadas por este usuario): ${result.createdInvoicesUpdated}`;
+          }
+          
+          alert(successMessage);
+          
+          // Recargar la lista de usuarios
+          await this.loadUsers();
+          
+          // Ajustar página si es necesario
+          if (this.paginatedUsers.length === 0 && this.currentPage > 1) {
+            this.currentPage = this.currentPage - 1;
+          }
+          
+        } catch (error) {
+          this.errorMessage = error.message || 'Error al eliminar el usuario';
+          console.error('Error deleting user:', error);
+          
+          // Mostrar error específico
+          alert(`Error al eliminar el usuario: ${this.errorMessage}`);
+        }
       }
-      
-      if (result.createdInvoicesUpdated > 0) {
-        successMessage += `\n• Facturas actualizadas (creadas por este usuario): ${result.createdInvoicesUpdated}`;
-      }
-      
-      alert(successMessage);
-      
-      // Recargar la lista de usuarios
-      await this.loadUsers();
-      
-    } catch (error) {
-      this.errorMessage = error.message || 'Error al eliminar el usuario';
-      console.error('Error deleting user:', error);
-      
-      // Mostrar error específico
-      alert(`Error al eliminar el usuario: ${this.errorMessage}`);
-    }
-  }
-},
+    },
 
-  // Método adicional para desactivación lógica (opcional)
-  async deactivateUser(user) {
-    if (confirm(`¿Desea desactivar al usuario ${user.firstName} ${user.lastName}?\n\nEl usuario no será eliminado, solo desactivado.`)) {
-      try {
-        await deactivateUser(user.userId);
-        alert(`Usuario "${user.firstName} ${user.lastName}" desactivado correctamente`);
-        await this.loadUsers();
-      } catch (error) {
-        this.errorMessage = error.message || 'Error al desactivar el usuario';
-        console.error('Error deactivating user:', error);
-      }
-    }
-  },
-
-  // Método adicional para reactivación (opcional)
-  async activateUser(user) {
-    if (confirm(`¿Desea reactivar al usuario ${user.firstName} ${user.lastName}?`)) {
-      try {
-        await activateUser(user.userId);
-        alert(`Usuario "${user.firstName} ${user.lastName}" reactivado correctamente`);
-        await this.loadUsers();
-      } catch (error) {
-        this.errorMessage = error.message || 'Error al reactivar el usuario';
-        console.error('Error activating user:', error);
-      }
-    }
-  },
-    
     async refreshUsers() {
       await this.loadUsers();
+      this.currentPage = 1; // Resetear a la primera página
     }
   }
 }
 </script>
 
 <style src="../../../assets/styles/users-modal.css"></style>
-
-<style scoped>
-.field-error {
-  color: #e74c3c;
-  font-size: 12px;
-  margin-top: 4px;
-  display: block;
-}
-
-.form-group input.error,
-.form-group select.error {
-  border-color: #e74c3c;
-  box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);
-}
-
-.btn-save:disabled {
-  background-color: #bdc3c7;
-  cursor: not-allowed;
-}
-</style>

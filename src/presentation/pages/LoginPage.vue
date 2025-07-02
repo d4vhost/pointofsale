@@ -20,7 +20,9 @@ export default {
       if (role === 'Administrador') {
         this.$router.push('/admin')
       } else if (role === 'Cliente') {
-        this.$router.push('/user')
+        this.$router.push('/client-invoices') // Clientes van a ver sus facturas
+      } else if (role === 'Empleado') {
+        this.$router.push('/employee') // Empleados van a crear facturas
       } else {
         this.$router.push('/dashboard') // fallback
       }

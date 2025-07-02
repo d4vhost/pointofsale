@@ -1,7 +1,7 @@
 <!--presentation/components/modals/blocked-unblocked-users.vue-->
 <template>
   <div v-if="isVisible" class="modal-overlay" @click="closeModal">
-    <div class="modal-container" @click.stop>
+    <div class="modal-container" @click.stop ref="modalContainer">
       <!-- Header del Modal -->
       <div class="modal-header">
         <h2>Usuarios Bloqueados</h2>
@@ -46,8 +46,9 @@
           <p>Cargando usuarios bloqueados...</p>
         </div>
 
-        <!-- Tabla de Usuarios Bloqueados -->
-        <div v-else-if="filteredBlockedUsers.length > 0" class="table-container">
+        <!-- Tabla de Usuarios Bloqueados CON PAGINACIÓN -->
+        <div v-else-if="blockedUsers.length > 0" class="table-container">
+          <!-- Tabla con usuarios o vacía -->
           <table class="users-table">
             <thead>
               <tr>
@@ -60,7 +61,8 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="user in filteredBlockedUsers" :key="user.userId" class="blocked-row">
+              <!-- Mostrar usuarios paginados si existen -->
+              <tr v-if="paginatedUsers.length > 0" v-for="user in paginatedUsers" :key="user.userId" class="blocked-row">
                 <td>
                   <span class="user-name">{{ user.firstName }} {{ user.lastName }}</span>
                 </td>
@@ -89,8 +91,61 @@
                   </button>
                 </td>
               </tr>
+              <!-- Mensaje cuando no hay resultados de filtro -->
+              <tr v-else>
+                <td colspan="6" class="no-results-row">
+                  <div class="no-results-message">
+                    <p>No se encontraron usuarios que coincidan con la búsqueda</p>
+                    <small>Intenta cambiar los filtros de búsqueda</small>
+                  </div>
+                </td>
+              </tr>
             </tbody>
           </table>
+
+          <!-- PAGINACIÓN DE USUARIOS - SIEMPRE VISIBLE -->
+          <div class="users-pagination">
+            <button 
+              @click="goToUserPage(1)" 
+              :disabled="currentUserPage === 1 || filteredBlockedUsers.length === 0"
+              class="pagination-btn"
+              type="button"
+            >
+              &#8249;&#8249;
+            </button>
+            <button 
+              @click="goToUserPage(currentUserPage - 1)" 
+              :disabled="currentUserPage === 1 || filteredBlockedUsers.length === 0"
+              class="pagination-btn"
+              type="button"
+            >
+              &#8249;
+            </button>
+            <span class="pagination-info">
+              <span v-if="filteredBlockedUsers.length > 0">
+                Página {{ currentUserPage }} de {{ totalUserPages }} ({{ filteredBlockedUsers.length }} usuarios)
+              </span>
+              <span v-else>
+                Página 1 de 1 (0 usuarios)
+              </span>
+            </span>
+            <button 
+              @click="goToUserPage(currentUserPage + 1)" 
+              :disabled="currentUserPage === totalUserPages || filteredBlockedUsers.length === 0"
+              class="pagination-btn"
+              type="button"
+            >
+              &#8250;
+            </button>
+            <button 
+              @click="goToUserPage(totalUserPages)" 
+              :disabled="currentUserPage === totalUserPages || filteredBlockedUsers.length === 0"
+              class="pagination-btn"
+              type="button"
+            >
+              &#8250;&#8250;
+            </button>
+          </div>
         </div>
 
         <!-- Mensaje si no hay usuarios bloqueados -->
@@ -126,7 +181,10 @@ export default {
       errorMessage: '',
       successMessage: '',
       searchQuery: '',
-      allUsers: []
+      allUsers: [],
+      // PAGINACIÓN DE USUARIOS
+      currentUserPage: 1,
+      usersPerPage: 3 // Máximo 3 usuarios por página
     }
   },
   computed: {
@@ -148,6 +206,18 @@ export default {
         user.email.toLowerCase().includes(query) ||
         (user.identificationNumber && user.identificationNumber.includes(query))
       );
+    },
+
+    // USUARIOS PAGINADOS
+    paginatedUsers() {
+      const start = (this.currentUserPage - 1) * this.usersPerPage;
+      const end = start + this.usersPerPage;
+      return this.filteredBlockedUsers.slice(start, end);
+    },
+
+    // TOTAL DE PÁGINAS DE USUARIOS
+    totalUserPages() {
+      return Math.ceil(this.filteredBlockedUsers.length / this.usersPerPage);
     }
   },
   mounted() {
@@ -161,9 +231,34 @@ export default {
         this.loadUsers();
         this.clearMessages();
       }
+    },
+
+    // RESETEAR PÁGINA CUANDO CAMBIEN LOS FILTROS
+    searchQuery() {
+      this.currentUserPage = 1;
     }
   },
   methods: {
+    // MÉTODOS DE PAGINACIÓN PARA USUARIOS CON SCROLL FIJO
+    goToUserPage(page) {
+      if (page >= 1 && page <= this.totalUserPages && page !== this.currentUserPage) {
+        // Guardar posición actual del scroll
+        const scrollPosition = this.$refs.modalContainer.scrollTop;
+        
+        // Cambiar la página
+        this.currentUserPage = page;
+        
+        // Restaurar la posición del scroll después de que Vue actualice
+        this.$nextTick(() => {
+          this.$refs.modalContainer.scrollTop = scrollPosition;
+        });
+      }
+    },
+
+    resetUserPagination() {
+      this.currentUserPage = 1;
+    },
+
     async loadUsers() {
       this.loading = true;
       this.errorMessage = '';
@@ -171,6 +266,7 @@ export default {
       try {
         const response = await getUsers();
         this.allUsers = response || [];
+        this.resetUserPagination(); // Resetear a la primera página
         console.log('Usuarios cargados:', this.allUsers.length);
         console.log('Usuarios bloqueados:', this.blockedUsers.length);
       } catch (error) {
@@ -212,6 +308,11 @@ export default {
           
           this.successMessage = `Usuario ${user.firstName} ${user.lastName} desbloqueado correctamente`;
           
+          // Ajustar página si es necesario después de desbloquear
+          if (this.paginatedUsers.length === 0 && this.currentUserPage > 1) {
+            this.currentUserPage = this.currentUserPage - 1;
+          }
+          
           // Limpiar mensaje de éxito después de 3 segundos
           setTimeout(() => {
             this.successMessage = '';
@@ -230,6 +331,7 @@ export default {
       this.$emit('close');
       this.clearMessages();
       this.searchQuery = '';
+      this.resetUserPagination();
     },
 
     async refreshUsers() {

@@ -12,7 +12,7 @@ import {
   CATEGORY_MAPPINGS
 } from './productValidators.js';
 
-export function useProductValidation(existingProducts = []) {
+export function useProductValidation(existingProducts = [], editingProduct = null) {
   // Estados de validación
   const fieldErrors = {};
   const fieldTouched = {};
@@ -34,25 +34,25 @@ export function useProductValidation(existingProducts = []) {
 
     switch (fieldName) {
       case 'code':
-        validation = validateProductCode(value, existingProducts);
+        validation = validateProductCode(value, existingProducts, editingProduct);
         break;
       case 'name':
-        validation = validateProductName(value);
+        validation = validateProductName(value, existingProducts, editingProduct);
         break;
       case 'description':
         validation = validateProductDescription(value);
         break;
       case 'stock':
-        validation = validateStock(value);
+        validation = validateStock(value, formData.minimumStock || 1);
         break;
       case 'purchasePrice':
         validation = validatePurchasePrice(value);
         break;
       case 'sellingPrice':
-        validation = validateSellingPrice(value);
+        validation = validateSellingPrice(value, formData.purchasePrice || 0);
         break;
       case 'minimumStock':
-        validation = validateMinimumStock(value);
+        validation = validateMinimumStock(value, formData.stock);
         break;
     }
 
@@ -75,9 +75,47 @@ export function useProductValidation(existingProducts = []) {
     return CATEGORY_MAPPINGS[prefix] || null;
   };
 
+  // Función para generar código único de producto
+  const generateUniqueProductCode = (categoryId, categories = []) => {
+    if (!categoryId || !categories.length) return '';
+    
+    const category = categories.find(cat => cat.categoryId === parseInt(categoryId));
+    if (!category) return '';
+    
+    // Obtener el prefijo de la categoría desde CATEGORY_MAPPINGS
+    const categoryPrefix = Object.keys(CATEGORY_MAPPINGS).find(
+      prefix => CATEGORY_MAPPINGS[prefix].name === category.name
+    );
+    
+    if (!categoryPrefix) return '';
+    
+    // Buscar el siguiente número disponible
+    const existingCodes = existingProducts
+      .filter(product => product.code.startsWith(categoryPrefix))
+      .map(product => {
+        const numericPart = product.code.substring(categoryPrefix.length);
+        return parseInt(numericPart) || 0;
+      })
+      .sort((a, b) => a - b);
+    
+    let nextNumber = 1;
+    for (const num of existingCodes) {
+      if (num === nextNumber) {
+        nextNumber++;
+      } else {
+        break;
+      }
+    }
+    
+    // Asegurar que no exceda 999
+    if (nextNumber > 999) nextNumber = 999;
+    
+    return `${categoryPrefix}${nextNumber.toString().padStart(3, '0')}`;
+  };
+
   // Función para validar todo el formulario
   const validateForm = (formData) => {
-    const validation = validateProductForm(formData, existingProducts);
+    const validation = validateProductForm(formData, existingProducts, editingProduct);
     Object.keys(fieldErrors).forEach(key => delete fieldErrors[key]);
     Object.assign(fieldErrors, validation.errors);
     return validation;
@@ -116,6 +154,20 @@ export function useProductValidation(existingProducts = []) {
   const filterLettersAndNumbers = (value) => {
     if (!value) return '';
     return value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, '');
+  };
+
+  // Función para filtrar solo números (enteros y decimales)
+  const filterNumericOnly = (value, allowDecimals = true) => {
+    if (!value) return '';
+    
+    if (allowDecimals) {
+      // Permitir números decimales
+      const regex = /^\d*\.?\d*$/;
+      return regex.test(value) ? value : value.slice(0, -1);
+    } else {
+      // Solo enteros
+      return value.replace(/[^0-9]/g, '');
+    }
   };
 
   // Función para formatear código de producto
@@ -164,6 +216,32 @@ export function useProductValidation(existingProducts = []) {
     return Object.keys(fieldErrors).length === 0;
   };
 
+  // Función para verificar si un código ya existe
+  const isCodeExists = (code) => {
+    if (!code || !existingProducts) return false;
+    
+    return existingProducts.some(product => {
+      // Si estamos editando, excluir el producto actual
+      if (editingProduct && product.productId === editingProduct.productId) {
+        return false;
+      }
+      return product.code.toUpperCase() === code.toUpperCase();
+    });
+  };
+
+  // Función para verificar si un nombre ya existe
+  const isNameExists = (name) => {
+    if (!name || !existingProducts) return false;
+    
+    return existingProducts.some(product => {
+      // Si estamos editando, excluir el producto actual
+      if (editingProduct && product.productId === editingProduct.productId) {
+        return false;
+      }
+      return product.name.toLowerCase() === name.toLowerCase();
+    });
+  };
+
   return {
     // Estados
     fieldErrors,
@@ -179,10 +257,14 @@ export function useProductValidation(existingProducts = []) {
     
     // Funciones de utilidad
     getCategoryFromCode,
+    generateUniqueProductCode,
     formatNumericInput,
     filterLettersOnly,
     filterLettersAndNumbers,
+    filterNumericOnly,
     formatProductCode,
-    isFormValid
+    isFormValid,
+    isCodeExists,
+    isNameExists
   };
 }

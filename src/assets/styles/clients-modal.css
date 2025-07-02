@@ -1,0 +1,379 @@
+/* src/assets/styles/clients-modal.css */
+
+/* OVERLAY DEL MODAL */
+.clients-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+/* CONTENIDO DEL MODAL */
+.clients-modal {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow: hidden;
+  border: 1px solid #ddd;
+}
+
+/* HEADER DEL MODAL */
+.clients-modal-header {
+  background: #2c3e50;
+  color: white;
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+}
+
+.clients-modal-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.clients-modal-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.clients-modal-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* CONTENIDO DEL MODAL */
+.clients-modal-content {
+  max-height: calc(90vh - 80px);
+  overflow-y: auto;
+}
+
+/* SECCIÓN DE BÚSQUEDA */
+.clients-search-section {
+  padding: 1.5rem;
+  border-bottom: 1px solid #eee;
+  background: #fafafa;
+}
+
+.clients-search-container {
+  position: relative;
+  max-width: 100%;
+}
+
+.clients-search-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem 0.5rem 2.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  background: white;
+}
+
+.clients-search-input:focus {
+  outline: none;
+  border-color: #2c3e50;
+}
+
+.clients-search-input::placeholder {
+  color: #999;
+}
+
+.clients-search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* ESTADOS DE CARGA Y ERROR */
+.clients-loading,
+.clients-error,
+.clients-no-results {
+  text-align: center;
+  padding: 2rem 1.5rem;
+  color: #666;
+  background: white;
+}
+
+.clients-loading-spinner {
+  border: 3px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 3px solid #2c3e50;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.retry-button {
+  background: #2c3e50;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+.retry-button:hover {
+  background: #34495e;
+}
+
+/* CONTADOR DE RESULTADOS */
+.clients-count {
+  padding: 0.75rem 1.5rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #eee;
+  font-size: 0.9rem;
+  color: #666;
+  text-align: center;
+}
+
+/* LISTA DE CLIENTES */
+.clients-list {
+  background: white;
+}
+
+.client-item {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+}
+
+.client-item:hover {
+  background: #f8f9fa;
+}
+
+.client-item:last-child {
+  border-bottom: none;
+}
+
+/* AVATAR DEL CLIENTE */
+.client-avatar {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: #2c3e50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+/* INFORMACIÓN DEL CLIENTE */
+.client-info {
+  flex: 1;
+}
+
+.client-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.25rem;
+}
+
+.client-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.client-detail {
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.client-detail-icon {
+  margin-right: 0.25rem;
+  font-size: 0.8rem;
+}
+
+.client-id {
+  font-size: 0.8rem;
+  color: #999;
+  font-family: 'Courier New', monospace;
+}
+
+/* INDICADOR DE SELECCIÓN */
+.client-select-indicator {
+  color: #2c3e50;
+  font-size: 1.2rem;
+  margin-left: 1rem;
+  opacity: 0;
+}
+
+.client-item:hover .client-select-indicator {
+  opacity: 1;
+}
+
+/* PAGINACIÓN */
+.clients-pagination {
+  padding: 1rem 1.5rem;
+  background: #f8f9fa;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pagination-btn {
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  min-width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.pagination-btn:disabled {
+  background: #f9fafb;
+  color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.pagination-info {
+  font-size: 0.85rem;
+  color: #374151;
+  margin: 0 1rem;
+  white-space: nowrap;
+}
+
+/* SCROLLBAR SIMPLE */
+.clients-modal-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.clients-modal-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.clients-modal-content::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+.clients-modal-content::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .clients-modal-overlay {
+    padding: 0.5rem;
+  }
+
+  .clients-modal {
+    max-width: 100%;
+    max-height: 95vh;
+  }
+
+  .clients-modal-header {
+    padding: 1rem;
+  }
+
+  .clients-search-section {
+    padding: 1rem;
+  }
+
+  .client-item {
+    padding: 1rem;
+  }
+
+  .client-details {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .clients-pagination {
+    padding: 1rem;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .pagination-info {
+    order: 3;
+    width: 100%;
+    text-align: center;
+    margin: 0.5rem 0 0 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .clients-modal-header {
+    padding: 0.75rem;
+  }
+
+  .clients-search-section {
+    padding: 0.75rem;
+  }
+
+  .client-item {
+    padding: 0.75rem;
+    flex-direction: column;
+    text-align: center;
+    gap: 0.75rem;
+  }
+
+  .client-info {
+    width: 100%;
+  }
+
+  .client-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 0.9rem;
+  }
+
+  .clients-modal-title {
+    font-size: 1.1rem;
+  }
+}

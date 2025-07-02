@@ -14,12 +14,13 @@
   z-index: 1000;
 }
 
+/* Modal Container - SÚPER COMPACTO */
 .modal-container {
   background: white;
   border-radius: 8px;
   width: auto;
-  min-width: 800px;
-  max-width: 900px;
+  min-width: 900px; /* Reducido de 1000px a 900px */
+  max-width: 1100px;  /* Reducido de 1200px a 1100px */
   max-height: 85vh;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
@@ -63,7 +64,7 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* Contenido principal - reemplaza modal-content */
+/* Contenido principal */
 .modal-body {
   padding: 1.5rem;
   flex: 1;
@@ -150,6 +151,56 @@
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
+/* Field Errors */
+.field-error {
+  color: #e74c3c;
+  font-size: 12px;
+  margin-top: 4px;
+  display: block;
+}
+
+.form-group input.error,
+.form-group select.error {
+  border-color: #e74c3c;
+  box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);
+}
+
+/* Password Container */
+.password-container {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.password-container input {
+  flex: 1;
+}
+
+.btn-generate-password {
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  min-width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-generate-password:hover {
+  background: #1d4ed8;
+}
+
+.password-strength {
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
 .form-actions {
   display: flex;
   gap: 0.75rem;
@@ -186,6 +237,11 @@
   background: #047857;
 }
 
+.btn-save:disabled {
+  background-color: #bdc3c7;
+  cursor: not-allowed;
+}
+
 /* Filters */
 .filters {
   display: flex;
@@ -213,12 +269,14 @@
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
+/* Table Container - SÚPER COMPACTO */
 .table-container {
   overflow-x: auto;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
-  max-height: 400px;
+  max-height: 500px;
   overflow-y: auto;
+  width: 100%;
 }
 
 .users-table {
@@ -226,13 +284,46 @@
   border-collapse: collapse;
   background: white;
   font-size: 0.85rem;
+  min-width: 750px; /* Reducido de 850px a 750px */
 }
 
 .users-table th,
 .users-table td {
-  padding: 0.75rem 0.5rem;
+  padding: 0.75rem 0.5rem; /* Reducido padding horizontal de 0.6rem a 0.5rem */
   text-align: left;
   border-bottom: 1px solid #f3f4f6;
+}
+
+/* Títulos del header centrados */
+.users-table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #374151;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  text-align: center; /* Centrar títulos del header */
+}
+
+/* Alineación específica para la columna de teléfono - ULTRA ESTRECHA */
+.users-table th:nth-child(3),
+.users-table td:nth-child(3) {
+  text-align: right; /* Alinear teléfono a la derecha */
+  width: 80px; /* Reducido de 90px a 80px */
+  max-width: 80px;
+  padding: 0.75rem 0.2rem; /* Padding ultra reducido */
+}
+
+/* Título de teléfono centrado pero columna alineada a la derecha */
+.users-table th:nth-child(3) {
+  text-align: center; /* Título centrado */
+}
+
+/* Columna de acciones compacta pero funcional */
+.users-table th:last-child,
+.users-table td:last-child {
+  width: 170px; /* Reducido de 180px a 170px */
+  min-width: 170px;
 }
 
 .users-table th {
@@ -242,6 +333,7 @@
   position: sticky;
   top: 0;
   z-index: 10;
+  text-align: center; /* Centrar títulos del header */
 }
 
 .users-table tbody tr:hover {
@@ -254,43 +346,31 @@
   border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 500;
-}
-
-.role-badge.administrador {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.role-badge.cliente {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.status-badge.active {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.status-badge.inactive {
-  background: #fee2e2;
-  color: #dc2626;
+  /* Colores eliminados - solo texto simple */
+  background: transparent;
+  color: #374151;
 }
 
 .actions {
   display: flex;
-  gap: 0.3rem;
-  flex-wrap: wrap;
+  gap: 0.4rem; /* Reducido ligeramente el gap */
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: nowrap; /* Evitar que se envuelvan a la siguiente línea */
 }
 
 .btn-edit,
 .btn-toggle,
 .btn-delete {
-  padding: 0.3rem 0.6rem;
+  padding: 0.35rem 0.7rem; /* Ligeramente reducido el padding */
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.75rem;
   font-weight: 500;
+  white-space: nowrap; /* Evitar que el texto se rompa */
+  flex-shrink: 0; /* Evitar que se compriman */
+  min-width: auto; /* Permitir que se ajusten al contenido */
 }
 
 .btn-edit {
@@ -320,6 +400,50 @@
   background: #fecaca;
 }
 
+/* Paginación */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-top: 1px solid #e5e7eb;
+}
+
+.pagination-btn {
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  min-width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.pagination-btn:disabled {
+  background: #f9fafb;
+  color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.pagination-info {
+  font-size: 0.85rem;
+  color: #374151;
+  margin: 0 1rem;
+  white-space: nowrap;
+}
+
 .empty-state {
   text-align: center;
   padding: 2rem;
@@ -344,6 +468,22 @@
 }
 
 /* Responsive */
+@media (max-width: 1000px) {
+  .modal-container {
+    width: 95%;
+    min-width: auto;
+    max-width: 95%;
+  }
+}
+
+@media (max-width: 1200px) {
+  .modal-container {
+    width: 95%;
+    min-width: auto;
+    max-width: 95%;
+  }
+}
+
 @media (max-width: 900px) {
   .modal-container {
     width: 95%;
@@ -380,11 +520,41 @@
   
   .users-table {
     font-size: 0.8rem;
+    min-width: 800px; /* Reducido para pantallas pequeñas */
   }
   
   .users-table th,
   .users-table td {
-    padding: 0.5rem 0.25rem;
+    padding: 0.5rem 0.5rem; /* Reducido para móviles */
+  }
+
+  /* En móviles, permitir wrap en acciones */
+  .actions {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .pagination-info {
+    order: 3;
+    width: 100%;
+    text-align: center;
+    margin: 0.5rem 0 0 0;
+  }
+
+  .password-container {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .btn-generate-password {
+    width: 100%;
+    height: auto;
+    padding: 0.5rem;
   }
 }
 
@@ -397,6 +567,27 @@
     flex-direction: column;
   }
   
+  .actions {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .password-container {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .btn-generate-password {
+    width: 100%;
+    height: auto;
+    padding: 0.5rem;
+  }
+
+  .users-table {
+    min-width: 600px; /* Reducido para pantallas muy pequeñas */
+  }
+
+  /* En pantallas muy pequeñas, botones en columna */
   .actions {
     flex-direction: column;
     gap: 0.25rem;

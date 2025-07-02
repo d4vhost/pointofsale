@@ -1,36 +1,38 @@
 // core/validators/addressValidator.js
+
 export function isValidAddress(address) {
-  // Letras, números, espacios, punto, coma y guión - mínimo 3 caracteres, máximo 25
-  const addressRegex = /^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,-]+$/;
-  
-  if (!address || address.trim().length === 0) {
+  if (!address || typeof address !== 'string') {
     return {
       isValid: false,
       message: 'La dirección es requerida'
     };
   }
-  
-  if (address.trim().length < 3) {
+
+  const trimmedAddress = address.trim();
+
+  if (trimmedAddress.length < 5) {
     return {
       isValid: false,
-      message: 'La dirección debe tener mínimo 3 caracteres'
+      message: 'La dirección debe tener al menos 5 caracteres'
     };
   }
-  
-  if (address.length > 25) {
+
+  if (trimmedAddress.length > 100) {
     return {
       isValid: false,
-      message: 'Máximo 25 caracteres permitidos'
+      message: 'La dirección no puede tener más de 100 caracteres'
     };
   }
-  
-  if (!addressRegex.test(address)) {
+
+  // Permitir letras, números, espacios y algunos caracteres especiales comunes en direcciones
+  const addressPattern = /^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s\.,#\-\/]+$/;
+  if (!addressPattern.test(trimmedAddress)) {
     return {
       isValid: false,
-      message: 'Solo se permiten letras, números, espacios, puntos, comas y guiones'
+      message: 'La dirección contiene caracteres no válidos'
     };
   }
-  
+
   return {
     isValid: true,
     message: ''

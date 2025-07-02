@@ -243,18 +243,30 @@ export default {
       return parseFloat(amount).toFixed(2)
     }
 
-    // Navegar hacia atrás
+    // Navegar hacia atrás según el rol del usuario
     const goBack = () => {
-      router.push('/mis-facturas') 
+      const userRole = localStorage.getItem('role')
+      
+      if (userRole === 'Empleado') {
+        router.push('/todas-facturas')
+      } else if (userRole === 'Cliente') {
+        router.push('/client-invoices')
+      } else if (userRole === 'Administrador') {
+        router.push('/admin') // O la ruta que uses para admin
+      } else {
+        // Fallback: intentar ir hacia atrás en el historial
+        router.go(-1)
+      }
     }
 
     // Logout
     const handleLogout = () => {
-      localStorage.removeItem('firstName')
-      localStorage.removeItem('lastName')
-      localStorage.removeItem('token')
-      localStorage.removeItem('userId')
-      localStorage.removeItem('role')
+      const keysToRemove = [
+        'firstName', 'lastName', 'token', 'email', 
+        'phone', 'address', 'userId', 'role'
+      ]
+      
+      keysToRemove.forEach(key => localStorage.removeItem(key))
       router.push('/')
     }
 

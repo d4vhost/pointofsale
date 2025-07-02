@@ -1,6 +1,6 @@
-<!-- src/presentation/pages/MyInvoicesPage.vue -->
+<!-- src/presentation/pages/AllInvoicesPage.vue -->
 <template>
-  <div class="my-invoices-page">
+  <div class="all-invoices-page">
     <!-- HEADER -->
     <header class="app-header">
       <div class="header-container">
@@ -9,6 +9,9 @@
           <h1 class="company-name">FactuSys</h1>
         </div>
         <div class="header-actions">
+          <button @click="goToEmployeePage" class="home-button">
+            Crear Factura
+          </button>
           <button @click="handleLogout" class="logout-button">
             Cerrar Sesión
           </button>
@@ -20,8 +23,8 @@
     <DefaultLayout>
       <div class="invoices-content">
         <div class="invoices-header">
-          <h1>Mis Facturas</h1>
-          <p>Aquí puedes ver todas tus facturas registradas</p>
+          <h1>Todas las Facturas</h1>
+          <p>Gestión de facturas de todos los clientes</p>
         </div>
 
         <!-- Filtros -->
@@ -29,7 +32,7 @@
           <div class="search-filters">
             <input
               v-model="searchQuery"
-              placeholder="Buscar por número de factura..."
+              placeholder="Buscar por número de factura o cliente..."
               class="search-input"
             />
           </div>
@@ -43,7 +46,7 @@
           
           <div v-else-if="filteredInvoices.length === 0" class="no-invoices">
             <h3>No se encontraron facturas</h3>
-            <p>Aún no has registrado ninguna factura o no hay resultados para tu búsqueda.</p>
+            <p>No hay facturas registradas en el sistema o no hay resultados para tu búsqueda.</p>
           </div>
           
           <div v-else class="invoices-grid">
@@ -65,9 +68,10 @@
               
               <div class="invoice-card-body">
                 <div class="invoice-info">
+                  <p><strong>Cliente:</strong> {{ getCustomerName(invoice) }}</p>
                   <p><strong>Fecha:</strong> {{ formatDate(invoice.invoiceDate) }}</p>
                   <p><strong>Método de Pago:</strong> {{ invoice.paymentMethod?.name || 'N/A' }}</p>
-                  <p><strong>Total:</strong> <span class="amount">${{ invoice.total?.toFixed(2) }}</span></p>
+                  <p><strong>Total:</strong> <span class="amount">${{ formatCurrency(invoice.total) }}</span></p>
                 </div>
               </div>
               
@@ -80,7 +84,7 @@
           </div>
         </div>
 
-        <!-- Paginación (opcional) -->
+        <!-- Paginación -->
         <div v-if="totalPages > 1" class="pagination">
           <button 
             @click="changePage(currentPage - 1)"
@@ -118,12 +122,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import DefaultLayout from '../layouts/DefaultLayout.vue'
-import { getUserInvoicesApi } from '../../data/api/get/getUserInvoices'
+import { getInvoicesApi } from '../../data/api/get/getInvoices'
 // Importar el CSS externo
 import '../../assets/styles/my-invoices.css'
 
 export default {
-  name: 'MyInvoicesPage',
+  name: 'AllInvoicesPage',
   components: {
     DefaultLayout
   },
@@ -136,23 +140,32 @@ export default {
     const currentPage = ref(1)
     const itemsPerPage = 12
 
+    // Verificar que el usuario sea empleado
+    const checkEmployeeAccess = () => {
+      const userRole = localStorage.getItem('role')
+      if (userRole !== 'Empleado') {
+        router.push('/')
+        return false
+      }
+      return true
+    }
+
     // Computed properties
     const filteredInvoices = computed(() => {
       let filtered = invoices.value
 
-      // Filtrar por búsqueda
+      // Filtrar por búsqueda (número de factura o nombre del cliente)
       if (searchQuery.value) {
-        filtered = filtered.filter(invoice =>
-          invoice.invoiceNumber.toLowerCase().includes(searchQuery.value.toLowerCase())
-        )
+        const query = searchQuery.value.toLowerCase()
+        filtered = filtered.filter(invoice => {
+          const invoiceNumber = invoice.invoiceNumber?.toLowerCase() || ''
+          const customerName = getCustomerName(invoice).toLowerCase()
+          return invoiceNumber.includes(query) || customerName.includes(query)
+        })
       }
 
-      // Filtrar por estado
-      if (statusFilter.value) {
-        filtered = filtered.filter(invoice => 
-          invoice.statusId === parseInt(statusFilter.value)
-        )
-      }
+      // Ordenar por fecha más reciente
+      filtered.sort((a, b) => new Date(b.invoiceDate) - new Date(a.invoiceDate))
 
       // Paginación
       const start = (currentPage.value - 1) * itemsPerPage
@@ -164,33 +177,29 @@ export default {
       let filtered = invoices.value
 
       if (searchQuery.value) {
-        filtered = filtered.filter(invoice =>
-          invoice.invoiceNumber.toLowerCase().includes(searchQuery.value.toLowerCase())
-        )
-      }
-
-      if (statusFilter.value) {
-        filtered = filtered.filter(invoice => 
-          invoice.statusId === parseInt(statusFilter.value)
-        )
+        const query = searchQuery.value.toLowerCase()
+        filtered = filtered.filter(invoice => {
+          const invoiceNumber = invoice.invoiceNumber?.toLowerCase() || ''
+          const customerName = getCustomerName(invoice).toLowerCase()
+          return invoiceNumber.includes(query) || customerName.includes(query)
+        })
       }
 
       return Math.ceil(filtered.length / itemsPerPage)
     })
 
     // Methods
-    const fetchInvoices = async () => {
+    const fetchAllInvoices = async () => {
       try {
         isLoading.value = true
-        const userId = localStorage.getItem('userId')
-        if (!userId) {
-          router.push('/')
-          return
-        }
-
-        const response = await getUserInvoicesApi(userId)
+        
+        const response = await getInvoicesApi()
         invoices.value = response.data || []
+        
+        console.log('Facturas cargadas:', invoices.value.length)
+        
       } catch (error) {
+        console.error('Error al cargar facturas:', error)
         alert('Error al cargar las facturas. Por favor, intente nuevamente.')
       } finally {
         isLoading.value = false
@@ -205,6 +214,11 @@ export default {
         month: 'short',
         day: 'numeric'
       })
+    }
+
+    const formatCurrency = (amount) => {
+      if (amount === null || amount === undefined) return '0.00'
+      return parseFloat(amount).toFixed(2)
     }
 
     const getStatusName = (statusId) => {
@@ -225,6 +239,13 @@ export default {
       return classMap[statusId] || 'status-unknown'
     }
 
+    const getCustomerName = (invoice) => {
+      if (invoice.customer) {
+        return `${invoice.customer.firstName || ''} ${invoice.customer.lastName || ''}`.trim()
+      }
+      return 'Cliente no disponible'
+    }
+
     const getProductsCount = (invoice) => {
       return invoice.invoiceDetails?.length || 0
     }
@@ -235,15 +256,12 @@ export default {
         return
       }
 
-      const targetRoute = `/invoice-details/${invoiceId}`
-
-      router.push(targetRoute)
+      router.push(`/invoice-details/${invoiceId}`)
     }
 
-    // Ir a la raíz del sitio
-    // const goToRoot = () => {
-    //   router.push('/')  
-    // }
+    const goToEmployeePage = () => {
+      router.push('/employee')
+    }
 
     const handleLogout = () => {
       const keysToRemove = [
@@ -261,24 +279,82 @@ export default {
       }
     }
 
-    onMounted(fetchInvoices)
+    onMounted(async () => {
+      if (checkEmployeeAccess()) {
+        await fetchAllInvoices()
+      }
+    })
 
     return {
       invoices,
       searchQuery,
-      statusFilter,
       isLoading,
       currentPage,
       filteredInvoices,
       totalPages,
       formatDate,
+      formatCurrency,
       getStatusName,
       getStatusClass,
+      getCustomerName,
       getProductsCount,
       viewInvoiceDetails,
+      goToEmployeePage,
       handleLogout,
       changePage
     }
   }
 }
 </script>
+
+<style scoped>
+.statistics-section {
+  margin-top: 30px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 15px;
+  background-color: white;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #6c757d;
+  margin-bottom: 5px;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #495057;
+}
+
+.search-filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .search-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+</style>

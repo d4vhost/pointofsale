@@ -194,6 +194,8 @@
   flex: 1;
   overflow-y: auto;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
 }
 
 .users-table {
@@ -201,6 +203,7 @@
   border-collapse: collapse;
   background: white;
   font-size: 0.9rem;
+  flex: 1;
 }
 
 .users-table th,
@@ -346,6 +349,75 @@
 .processing {
   color: #6b7280;
   font-size: 0.8rem;
+}
+
+/* NO RESULTS ROW */
+.no-results-row {
+  text-align: center;
+  padding: 2rem;
+}
+
+.no-results-message {
+  color: #6b7280;
+  padding: 1rem;
+}
+
+.no-results-message p {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #374151;
+}
+
+.no-results-message small {
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+/* PAGINACIÓN DE USUARIOS */
+.users-pagination {
+  padding: 1rem;
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.pagination-btn {
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  min-width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.pagination-btn:disabled {
+  background: #f9fafb;
+  color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.pagination-info {
+  font-size: 0.85rem;
+  color: #374151;
+  margin: 0 1rem;
+  white-space: nowrap;
 }
 
 /* Messages */
@@ -513,6 +585,19 @@
   .users-table th:nth-child(3) { width: 30%; }
   .users-table th:nth-child(4) { width: 15%; }
   .users-table th:nth-child(5) { width: 15%; }
+
+  /* Paginación responsive */
+  .users-pagination {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .pagination-info {
+    order: 3;
+    width: 100%;
+    text-align: center;
+    margin: 0.5rem 0 0 0;
+  }
 }
 
 @media (max-width: 480px) {
@@ -549,5 +634,16 @@
   .role-badge {
     font-size: 0.7rem;
     padding: 0.2rem 0.6rem;
+  }
+
+  .pagination-btn {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.8rem;
+    min-width: 28px;
+    height: 28px;
+  }
+
+  .pagination-info {
+    font-size: 0.8rem;
   }
 }
