@@ -57,7 +57,7 @@
                   <div class="quantity-controls">
                     <label>Cantidad:</label>
                     <input 
-                      type="text"
+                      type="number"
                       :value="productQuantities[product.productId]"
                       @input="handleQuantityInput($event, product)"
                       @blur="validateQuantity(product)"
